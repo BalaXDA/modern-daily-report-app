@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  QA
+  VIEWER
+}
+
+enum ReportStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum Platform {
+  MAC_INTEL
+  MAC_ARM
+  WINDOWS
+}
+
+enum TestOutcome {
+  PASS
+  FAIL
+  NA
+  UNTESTED
+}
+
+enum BugPriority {
+  P0
+  P1
+  P2
+  P3
+  P4
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(QA)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  reports Report[] @relation("UserReports")
+}
+
+model Report {
+  id           String       @id @default(cuid())
+  title        String
+  productName  String
+  buildVersion String
+  reportDate   DateTime
+  preparedBy   String
+  summary      String       @default("")
+  status       ReportStatus @default(DRAFT)
+
+  createdById String
+  createdBy   User   @relation("UserReports", fields: [createdById], references: [id])
+
+  bugs         Bug[]
+  devices      DeviceConfiguration[]
+  testResults  TestResult[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([reportDate])
+  @@index([status])
+}
+
+model Bug {
+  id         String      @id @default(cuid())
+  reportId   String
+  report     Report      @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  jiraId     String
+  title      String
+  status     String
+  priority   BugPriority @default(P3)
+  epvFlag    Boolean     @default(false)
+  platform   Platform?
+  isNewToday Boolean     @default(false)
+  owner      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([reportId])
+  @@index([isNewToday])
+}
+
+model DeviceConfiguration {
+  id        String   @id @default(cuid())
+  reportId  String
+  report    Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  platform  Platform
+  osVersion String
+  processor String
+  ram       String
+  notes     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([reportId])
+}
+
+model TestResult {
+  id              String      @id @default(cuid())
+  reportId        String
+  report          Report      @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  testcaseId      String
+  testcaseTitle   String
+  testsuiteLabel  String
+  macIntelResult  TestOutcome @default(UNTESTED)
+  macArmResult    TestOutcome @default(UNTESTED)
+  windowsResult   TestOutcome @default(UNTESTED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([reportId])
+}
