@@ -1,43 +1,16 @@
+// To deploy on Vercel:
+//   1. Change `provider` below to "postgresql"
+//   2. Set DATABASE_URL to your Vercel/Neon Postgres URL
+//   3. Run `npx prisma migrate deploy` (the build script does this automatically)
+// No other code or schema change is needed - everything else is portable.
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "rhel-openssl-3.0.x", "debian-openssl-3.0.x"]
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
-}
-
-enum Role {
-  ADMIN
-  QA
-  VIEWER
-}
-
-enum ReportStatus {
-  DRAFT
-  PUBLISHED
-}
-
-enum Platform {
-  MAC_INTEL
-  MAC_ARM
-  WINDOWS
-}
-
-enum TestOutcome {
-  PASS
-  FAIL
-  NA
-  UNTESTED
-}
-
-enum BugPriority {
-  P0
-  P1
-  P2
-  P3
-  P4
 }
 
 model User {
@@ -45,7 +18,8 @@ model User {
   name         String
   email        String   @unique
   passwordHash String
-  role         Role     @default(QA)
+  // Role: ADMIN | QA | VIEWER
+  role         String   @default("QA")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -53,14 +27,15 @@ model User {
 }
 
 model Report {
-  id           String       @id @default(cuid())
+  id           String   @id @default(cuid())
   title        String
   productName  String
   buildVersion String
   reportDate   DateTime
   preparedBy   String
-  summary      String       @default("")
-  status       ReportStatus @default(DRAFT)
+  summary      String   @default("")
+  // ReportStatus: DRAFT | PUBLISHED
+  status       String   @default("DRAFT")
 
   createdById String
   createdBy   User   @relation("UserReports", fields: [createdById], references: [id])
@@ -77,17 +52,19 @@ model Report {
 }
 
 model Bug {
-  id         String      @id @default(cuid())
+  id         String   @id @default(cuid())
   reportId   String
-  report     Report      @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  report     Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
 
   jiraId     String
   title      String
   status     String
-  priority   BugPriority @default(P3)
-  epvFlag    Boolean     @default(false)
-  platform   Platform?
-  isNewToday Boolean     @default(false)
+  // BugPriority: P0 | P1 | P2 | P3 | P4
+  priority   String   @default("P3")
+  epvFlag    Boolean  @default(false)
+  // Platform: MAC_INTEL | MAC_ARM | WINDOWS (nullable)
+  platform   String?
+  isNewToday Boolean  @default(false)
   owner      String?
 
   createdAt DateTime @default(now())
@@ -102,7 +79,8 @@ model DeviceConfiguration {
   reportId  String
   report    Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
 
-  platform  Platform
+  // Platform: MAC_INTEL | MAC_ARM | WINDOWS
+  platform  String
   osVersion String
   processor String
   ram       String
@@ -115,16 +93,17 @@ model DeviceConfiguration {
 }
 
 model TestResult {
-  id              String      @id @default(cuid())
+  id              String   @id @default(cuid())
   reportId        String
-  report          Report      @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  report          Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
 
   testcaseId      String
   testcaseTitle   String
   testsuiteLabel  String
-  macIntelResult  TestOutcome @default(UNTESTED)
-  macArmResult    TestOutcome @default(UNTESTED)
-  windowsResult   TestOutcome @default(UNTESTED)
+  // TestOutcome: PASS | FAIL | NA | UNTESTED
+  macIntelResult  String   @default("UNTESTED")
+  macArmResult    String   @default("UNTESTED")
+  windowsResult   String   @default("UNTESTED")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

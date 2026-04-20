@@ -1,5 +1,10 @@
-import { PrismaClient, Platform, TestOutcome, BugPriority, ReportStatus } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+
+type Platform = "MAC_INTEL" | "MAC_ARM" | "WINDOWS";
+type TestOutcome = "PASS" | "FAIL" | "NA" | "UNTESTED";
+type BugPriority = "P0" | "P1" | "P2" | "P3" | "P4";
+type ReportStatus = "DRAFT" | "PUBLISHED";
 
 const prisma = new PrismaClient();
 
@@ -47,21 +52,21 @@ type SeedDailyPlan = {
 };
 
 const PLAN: SeedDailyPlan[] = [
-  { daysAgo: 14, status: ReportStatus.PUBLISHED, summary: "Fresh build smoke run on macOS Sonoma. Major install/update flows green; minor sync hiccup on Windows.", newBugs: 4, closedFromYesterday: 0, outcomeBias: { pass: 70, fail: 10, na: 10, untested: 10 } },
-  { daysAgo: 13, status: ReportStatus.PUBLISHED, summary: "Regression on Mac ARM completed. Fonts activation intermittent under low memory.", newBugs: 3, closedFromYesterday: 1, outcomeBias: { pass: 72, fail: 8, na: 12, untested: 8 } },
-  { daysAgo: 12, status: ReportStatus.PUBLISHED, summary: "Network resiliency suite executed; proxy edge cases logged for Windows.", newBugs: 2, closedFromYesterday: 2, outcomeBias: { pass: 75, fail: 7, na: 10, untested: 8 } },
-  { daysAgo: 11, status: ReportStatus.PUBLISHED, summary: "Beta apps tab validated. Install Beta blocked on Mac Intel due to entitlement check.", newBugs: 5, closedFromYesterday: 1, outcomeBias: { pass: 65, fail: 15, na: 10, untested: 10 } },
-  { daysAgo: 10, status: ReportStatus.PUBLISHED, summary: "Hotfix verification - install path bug fixed; revalidated install/uninstall scenarios.", newBugs: 2, closedFromYesterday: 4, outcomeBias: { pass: 78, fail: 7, na: 10, untested: 5 } },
-  { daysAgo: 9, status: ReportStatus.PUBLISHED, summary: "Stock licensing flow validated end-to-end; one P2 around localized currency.", newBugs: 3, closedFromYesterday: 2, outcomeBias: { pass: 76, fail: 9, na: 9, untested: 6 } },
-  { daysAgo: 8, status: ReportStatus.PUBLISHED, summary: "Discover tab content load slow on Windows under high CPU. Investigation continues.", newBugs: 2, closedFromYesterday: 3, outcomeBias: { pass: 74, fail: 11, na: 8, untested: 7 } },
-  { daysAgo: 7, status: ReportStatus.PUBLISHED, summary: "Self-update path covered. Notifications panel works as expected on all platforms.", newBugs: 1, closedFromYesterday: 2, outcomeBias: { pass: 80, fail: 6, na: 8, untested: 6 } },
-  { daysAgo: 6, status: ReportStatus.PUBLISHED, summary: "Preferences re-test after settings rewrite; install location migration smooth.", newBugs: 2, closedFromYesterday: 1, outcomeBias: { pass: 77, fail: 8, na: 9, untested: 6 } },
-  { daysAgo: 5, status: ReportStatus.PUBLISHED, summary: "Files sync heavy run (5GB) on Mac ARM passes; Windows still showing throttling under VPN.", newBugs: 3, closedFromYesterday: 2, outcomeBias: { pass: 73, fail: 10, na: 10, untested: 7 } },
-  { daysAgo: 4, status: ReportStatus.PUBLISHED, summary: "Telemetry pipeline verified. Crash reporter ETS payloads correctly tagged with build version.", newBugs: 1, closedFromYesterday: 3, outcomeBias: { pass: 79, fail: 7, na: 9, untested: 5 } },
-  { daysAgo: 3, status: ReportStatus.PUBLISHED, summary: "Marketplace plugin install sweep passed. One P3 for thumbnail rendering on Windows HiDPI.", newBugs: 2, closedFromYesterday: 2, outcomeBias: { pass: 78, fail: 8, na: 8, untested: 6 } },
-  { daysAgo: 2, status: ReportStatus.PUBLISHED, summary: "Authentication suite re-run after SSO endpoint change; zero blockers.", newBugs: 1, closedFromYesterday: 4, outcomeBias: { pass: 82, fail: 5, na: 8, untested: 5 } },
-  { daysAgo: 1, status: ReportStatus.PUBLISHED, summary: "Pre-RC pass: end-to-end smoke clean on all 3 platforms. One Mac ARM stock licensing intermittent.", newBugs: 1, closedFromYesterday: 3, outcomeBias: { pass: 84, fail: 5, na: 7, untested: 4 } },
-  { daysAgo: 0, status: ReportStatus.DRAFT,    summary: "RC candidate. Today's focus: Files sync stress, Beta installer entitlement re-test, and Discover regression.", newBugs: 3, closedFromYesterday: 2, outcomeBias: { pass: 80, fail: 8, na: 8, untested: 4 } },
+  { daysAgo: 14, status: "PUBLISHED", summary: "Fresh build smoke run on macOS Sonoma. Major install/update flows green; minor sync hiccup on Windows.", newBugs: 4, closedFromYesterday: 0, outcomeBias: { pass: 70, fail: 10, na: 10, untested: 10 } },
+  { daysAgo: 13, status: "PUBLISHED", summary: "Regression on Mac ARM completed. Fonts activation intermittent under low memory.", newBugs: 3, closedFromYesterday: 1, outcomeBias: { pass: 72, fail: 8, na: 12, untested: 8 } },
+  { daysAgo: 12, status: "PUBLISHED", summary: "Network resiliency suite executed; proxy edge cases logged for Windows.", newBugs: 2, closedFromYesterday: 2, outcomeBias: { pass: 75, fail: 7, na: 10, untested: 8 } },
+  { daysAgo: 11, status: "PUBLISHED", summary: "Beta apps tab validated. Install Beta blocked on Mac Intel due to entitlement check.", newBugs: 5, closedFromYesterday: 1, outcomeBias: { pass: 65, fail: 15, na: 10, untested: 10 } },
+  { daysAgo: 10, status: "PUBLISHED", summary: "Hotfix verification - install path bug fixed; revalidated install/uninstall scenarios.", newBugs: 2, closedFromYesterday: 4, outcomeBias: { pass: 78, fail: 7, na: 10, untested: 5 } },
+  { daysAgo: 9, status: "PUBLISHED", summary: "Stock licensing flow validated end-to-end; one P2 around localized currency.", newBugs: 3, closedFromYesterday: 2, outcomeBias: { pass: 76, fail: 9, na: 9, untested: 6 } },
+  { daysAgo: 8, status: "PUBLISHED", summary: "Discover tab content load slow on Windows under high CPU. Investigation continues.", newBugs: 2, closedFromYesterday: 3, outcomeBias: { pass: 74, fail: 11, na: 8, untested: 7 } },
+  { daysAgo: 7, status: "PUBLISHED", summary: "Self-update path covered. Notifications panel works as expected on all platforms.", newBugs: 1, closedFromYesterday: 2, outcomeBias: { pass: 80, fail: 6, na: 8, untested: 6 } },
+  { daysAgo: 6, status: "PUBLISHED", summary: "Preferences re-test after settings rewrite; install location migration smooth.", newBugs: 2, closedFromYesterday: 1, outcomeBias: { pass: 77, fail: 8, na: 9, untested: 6 } },
+  { daysAgo: 5, status: "PUBLISHED", summary: "Files sync heavy run (5GB) on Mac ARM passes; Windows still showing throttling under VPN.", newBugs: 3, closedFromYesterday: 2, outcomeBias: { pass: 73, fail: 10, na: 10, untested: 7 } },
+  { daysAgo: 4, status: "PUBLISHED", summary: "Telemetry pipeline verified. Crash reporter ETS payloads correctly tagged with build version.", newBugs: 1, closedFromYesterday: 3, outcomeBias: { pass: 79, fail: 7, na: 9, untested: 5 } },
+  { daysAgo: 3, status: "PUBLISHED", summary: "Marketplace plugin install sweep passed. One P3 for thumbnail rendering on Windows HiDPI.", newBugs: 2, closedFromYesterday: 2, outcomeBias: { pass: 78, fail: 8, na: 8, untested: 6 } },
+  { daysAgo: 2, status: "PUBLISHED", summary: "Authentication suite re-run after SSO endpoint change; zero blockers.", newBugs: 1, closedFromYesterday: 4, outcomeBias: { pass: 82, fail: 5, na: 8, untested: 5 } },
+  { daysAgo: 1, status: "PUBLISHED", summary: "Pre-RC pass: end-to-end smoke clean on all 3 platforms. One Mac ARM stock licensing intermittent.", newBugs: 1, closedFromYesterday: 3, outcomeBias: { pass: 84, fail: 5, na: 7, untested: 4 } },
+  { daysAgo: 0, status: "DRAFT",     summary: "RC candidate. Today's focus: Files sync stress, Beta installer entitlement re-test, and Discover regression.", newBugs: 3, closedFromYesterday: 2, outcomeBias: { pass: 80, fail: 8, na: 8, untested: 4 } },
 ];
 
 const BUG_TITLES = [
@@ -83,8 +88,8 @@ const BUG_TITLES = [
 ];
 
 const STATUSES = ["Open", "In Progress", "Reopened", "Verify", "Closed", "Resolved", "Done"];
-const PRIORITIES: BugPriority[] = [BugPriority.P0, BugPriority.P1, BugPriority.P2, BugPriority.P3, BugPriority.P4];
-const PLATFORMS_ARR: Platform[] = [Platform.MAC_INTEL, Platform.MAC_ARM, Platform.WINDOWS];
+const PRIORITIES: BugPriority[] = ["P0", "P1", "P2", "P3", "P4"];
+const PLATFORMS_ARR: Platform[] = ["MAC_INTEL", "MAC_ARM", "WINDOWS"];
 const OWNERS = ["Priya R.", "Marco D.", "Aiden K.", "Sara V.", "Hiroshi T.", "Lina P."];
 
 function rand<T>(arr: T[]): T {
@@ -94,10 +99,10 @@ function rand<T>(arr: T[]): T {
 function pickOutcome(bias: SeedDailyPlan["outcomeBias"]): TestOutcome {
   const total = bias.pass + bias.fail + bias.na + bias.untested;
   let n = Math.random() * total;
-  if ((n -= bias.pass) < 0) return TestOutcome.PASS;
-  if ((n -= bias.fail) < 0) return TestOutcome.FAIL;
-  if ((n -= bias.na) < 0) return TestOutcome.NA;
-  return TestOutcome.UNTESTED;
+  if ((n -= bias.pass) < 0) return "PASS";
+  if ((n -= bias.fail) < 0) return "FAIL";
+  if ((n -= bias.na) < 0) return "NA";
+  return "UNTESTED";
 }
 
 function dateNDaysAgo(days: number): Date {
@@ -200,7 +205,7 @@ async function main() {
       data: [
         {
           reportId: report.id,
-          platform: Platform.MAC_INTEL,
+          platform: "MAC_INTEL",
           osVersion: "macOS 14.6.1 (Sonoma)",
           processor: "Intel Core i7-9750H @ 2.6GHz",
           ram: "16 GB",
@@ -208,7 +213,7 @@ async function main() {
         },
         {
           reportId: report.id,
-          platform: Platform.MAC_ARM,
+          platform: "MAC_ARM",
           osVersion: "macOS 15.1 (Sequoia)",
           processor: "Apple M2 Pro 12-core",
           ram: "32 GB",
@@ -216,7 +221,7 @@ async function main() {
         },
         {
           reportId: report.id,
-          platform: Platform.WINDOWS,
+          platform: "WINDOWS",
           osVersion: "Windows 11 Pro 23H2 (build 22631.4317)",
           processor: "Intel Core i7-1260P",
           ram: "16 GB",

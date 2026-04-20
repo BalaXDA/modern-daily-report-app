@@ -10,7 +10,7 @@ import {
   totalsForReport,
   type ReportWithChildren,
 } from "./report-helpers";
-import type { TestOutcome } from "@prisma/client";
+import type { Platform, TestOutcome } from "./types";
 
 const colors = {
   text: "#0f172a",
@@ -131,8 +131,17 @@ function fmtDate(d: Date) {
   return new Intl.DateTimeFormat("en-US", { year: "numeric", month: "short", day: "numeric" }).format(d);
 }
 
-function outcomeColor(o: TestOutcome) {
+function outcomeColor(raw: string) {
+  const o = raw as TestOutcome;
   return o === "PASS" ? colors.pass : o === "FAIL" ? colors.fail : o === "NA" ? colors.na : colors.untested;
+}
+
+function outcomeLabel(raw: string) {
+  return OUTCOME_LABELS[raw as TestOutcome] ?? raw;
+}
+
+function platformLabel(raw: string) {
+  return PLATFORM_LABELS[raw as Platform] ?? raw;
 }
 
 export function ReportPdfDocument({ report }: { report: ReportWithChildren }) {
@@ -276,7 +285,7 @@ export function ReportPdfDocument({ report }: { report: ReportWithChildren }) {
                 <Text style={[styles.td, { width: "9%" }]}>{b.priority}</Text>
                 <Text style={[styles.td, { width: "7%" }]}>{b.epvFlag ? "Yes" : "No"}</Text>
                 <Text style={[styles.td, { width: "12%" }]}>
-                  {b.platform ? PLATFORM_LABELS[b.platform] : "-"}
+                  {b.platform ? platformLabel(b.platform) : "-"}
                 </Text>
                 <Text style={[styles.td, { width: "10%" }]}>{b.owner ?? "-"}</Text>
               </View>
@@ -298,7 +307,7 @@ export function ReportPdfDocument({ report }: { report: ReportWithChildren }) {
             </View>
             {report.devices.map((d) => (
               <View key={d.id} style={styles.tRow} wrap={false}>
-                <Text style={[styles.td, { width: "16%" }]}>{PLATFORM_LABELS[d.platform]}</Text>
+                <Text style={[styles.td, { width: "16%" }]}>{platformLabel(d.platform)}</Text>
                 <Text style={[styles.td, { width: "26%" }]}>{d.osVersion}</Text>
                 <Text style={[styles.td, { width: "26%" }]}>{d.processor}</Text>
                 <Text style={[styles.td, { width: "10%" }]}>{d.ram}</Text>
@@ -325,17 +334,17 @@ export function ReportPdfDocument({ report }: { report: ReportWithChildren }) {
               <Text style={[styles.td, { width: "21%" }]}>{t.testsuiteLabel}</Text>
               <View style={[styles.td, { width: "10%" }]}>
                 <Text style={[styles.outcomePill, { backgroundColor: outcomeColor(t.macIntelResult) }]}>
-                  {OUTCOME_LABELS[t.macIntelResult]}
+                  {outcomeLabel(t.macIntelResult)}
                 </Text>
               </View>
               <View style={[styles.td, { width: "10%" }]}>
                 <Text style={[styles.outcomePill, { backgroundColor: outcomeColor(t.macArmResult) }]}>
-                  {OUTCOME_LABELS[t.macArmResult]}
+                  {outcomeLabel(t.macArmResult)}
                 </Text>
               </View>
               <View style={[styles.td, { width: "10%" }]}>
                 <Text style={[styles.outcomePill, { backgroundColor: outcomeColor(t.windowsResult) }]}>
-                  {OUTCOME_LABELS[t.windowsResult]}
+                  {outcomeLabel(t.windowsResult)}
                 </Text>
               </View>
             </View>

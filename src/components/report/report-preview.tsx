@@ -14,7 +14,7 @@ import {
 } from "@/lib/report-helpers";
 import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-import type { TestOutcome } from "@prisma/client";
+import type { Platform, TestOutcome } from "@/lib/types";
 
 export function ReportPreview({ report }: { report: ReportWithChildren }) {
   const summary = computePlatformSummary(report.testResults);
@@ -149,7 +149,7 @@ export function ReportPreview({ report }: { report: ReportWithChildren }) {
                       {b.epvFlag ? <Badge variant="success">Yes</Badge> : <Badge variant="muted">No</Badge>}
                     </TableCell>
                     <TableCell className="text-xs">
-                      {b.platform ? PLATFORM_LABELS[b.platform] : "—"}
+                      {b.platform ? PLATFORM_LABELS[b.platform as Platform] : "—"}
                     </TableCell>
                     <TableCell className="text-xs">{b.owner ?? "—"}</TableCell>
                   </TableRow>
@@ -182,7 +182,7 @@ export function ReportPreview({ report }: { report: ReportWithChildren }) {
                 {report.devices.map((d) => (
                   <TableRow key={d.id}>
                     <TableCell>
-                      <Badge variant="outline">{PLATFORM_LABELS[d.platform]}</Badge>
+                      <Badge variant="outline">{PLATFORM_LABELS[d.platform as Platform]}</Badge>
                     </TableCell>
                     <TableCell className="text-sm">{d.osVersion}</TableCell>
                     <TableCell className="text-sm">{d.processor}</TableCell>
@@ -260,15 +260,16 @@ function Empty({ text }: { text: string }) {
   );
 }
 
-function OutcomePill({ outcome }: { outcome: TestOutcome }) {
+function OutcomePill({ outcome }: { outcome: string }) {
+  const o = outcome as TestOutcome;
   return (
     <span
       className={cn(
         "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium",
-        OUTCOME_COLORS[outcome],
+        OUTCOME_COLORS[o] ?? OUTCOME_COLORS.UNTESTED,
       )}
     >
-      {OUTCOME_LABELS[outcome]}
+      {OUTCOME_LABELS[o] ?? o}
     </span>
   );
 }

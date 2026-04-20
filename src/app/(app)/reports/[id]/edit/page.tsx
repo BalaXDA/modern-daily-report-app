@@ -3,6 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { buildDailyTrend } from "@/lib/report-helpers";
 import { ReportForm } from "@/components/report/report-form";
 import { PageHeader } from "@/components/page-header";
+import type {
+  BugPriority,
+  Platform,
+  ReportStatus,
+  TestOutcome,
+} from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -35,21 +41,21 @@ export default async function EditReportPage({ params }: { params: { id: string 
           reportDate: report.reportDate,
           preparedBy: report.preparedBy,
           summary: report.summary,
-          status: report.status,
+          status: report.status as ReportStatus,
           bugs: report.bugs.map((b) => ({
             id: b.id,
             jiraId: b.jiraId,
             title: b.title,
             status: b.status,
-            priority: b.priority,
+            priority: b.priority as BugPriority,
             epvFlag: b.epvFlag,
-            platform: b.platform ?? null,
+            platform: (b.platform as Platform | null) ?? null,
             isNewToday: b.isNewToday,
             owner: b.owner ?? "",
           })),
           devices: report.devices.map((d) => ({
             id: d.id,
-            platform: d.platform,
+            platform: d.platform as Platform,
             osVersion: d.osVersion,
             processor: d.processor,
             ram: d.ram,
@@ -60,9 +66,9 @@ export default async function EditReportPage({ params }: { params: { id: string 
             testcaseId: t.testcaseId,
             testcaseTitle: t.testcaseTitle,
             testsuiteLabel: t.testsuiteLabel,
-            macIntelResult: t.macIntelResult,
-            macArmResult: t.macArmResult,
-            windowsResult: t.windowsResult,
+            macIntelResult: t.macIntelResult as TestOutcome,
+            macArmResult: t.macArmResult as TestOutcome,
+            windowsResult: t.windowsResult as TestOutcome,
           })),
         }}
       />

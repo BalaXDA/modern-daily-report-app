@@ -39,7 +39,7 @@ import {
   OUTCOME_LABELS,
   type DailyTrendPoint,
 } from "@/lib/report-helpers";
-import { Platform, TestOutcome, BugPriority } from "@prisma/client";
+import type { Platform, TestOutcome, BugPriority } from "@/lib/types";
 
 type Props = {
   initial?: Partial<ReportInput> & { id?: string };

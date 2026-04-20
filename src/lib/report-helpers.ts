@@ -1,7 +1,7 @@
 import type { Bug, DeviceConfiguration, Report, TestResult } from "@prisma/client";
-import { Platform, TestOutcome } from "@prisma/client";
+import { PLATFORM_VALUES, type Platform, type TestOutcome } from "./types";
 
-export const PLATFORMS: Platform[] = [Platform.MAC_INTEL, Platform.MAC_ARM, Platform.WINDOWS];
+export const PLATFORMS: Platform[] = [...PLATFORM_VALUES];
 
 export const PLATFORM_LABELS: Record<Platform, string> = {
   MAC_INTEL: "Mac Intel",
@@ -54,22 +54,13 @@ export function computePlatformSummary(testResults: TestResult[]): PlatformSumma
   return summary;
 }
 
-function incrementOutcome(counts: PlatformCounts, outcome: TestOutcome) {
+function incrementOutcome(counts: PlatformCounts, outcomeRaw: string) {
   counts.total += 1;
-  switch (outcome) {
-    case TestOutcome.PASS:
-      counts.pass += 1;
-      break;
-    case TestOutcome.FAIL:
-      counts.fail += 1;
-      break;
-    case TestOutcome.NA:
-      counts.na += 1;
-      break;
-    case TestOutcome.UNTESTED:
-      counts.untested += 1;
-      break;
-  }
+  const outcome = outcomeRaw as TestOutcome;
+  if (outcome === "PASS") counts.pass += 1;
+  else if (outcome === "FAIL") counts.fail += 1;
+  else if (outcome === "NA") counts.na += 1;
+  else counts.untested += 1;
 }
 
 export function isActiveBug(bug: Pick<Bug, "status">): boolean {
