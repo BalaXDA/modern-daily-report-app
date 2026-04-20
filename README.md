@@ -213,6 +213,36 @@ The schema enforces these four outcomes per platform/test:
 | Add a new platform | `Platform` enum + helpers in `src/lib/report-helpers.ts` (the `PLATFORMS`, `PLATFORM_LABELS` constants) and add the new outcome column to `TestResult` |
 | Replace seed data | `prisma/seed.ts` — re-run `npm run db:seed` |
 
+## Deploying to Vercel
+
+The repo is Vercel-ready. Workflow:
+
+1. **Provision a Postgres database** (one of):
+   - Vercel Marketplace → **Neon** (recommended; auto-injects `DATABASE_URL`)
+   - Vercel Marketplace → **Vercel Postgres** / **Supabase**
+   - Any external Postgres (Render, Railway, RDS, etc.)
+2. **Import the GitHub repo** at <https://vercel.com/new>. Vercel auto-detects Next.js.
+3. **Set Environment Variables** (Production + Preview + Development):
+   - `DATABASE_URL` — pooled connection string (Neon's "Pooled connection" or Supabase's `pgbouncer` URL is best)
+   - `NEXTAUTH_SECRET` — generate with `openssl rand -base64 32`
+   - `NEXTAUTH_URL` — `https://<your-project>.vercel.app` (Vercel injects this for you on most setups, but setting it explicitly is safest)
+   - *(optional)* `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD`, `SEED_ADMIN_NAME`
+4. **Deploy.** Vercel runs `prisma generate && prisma migrate deploy && next build` automatically (configured in `vercel.json` and `package.json`), so your schema is applied on every deploy.
+5. **Seed the production DB once** (one-off, locally pointed at the prod URL):
+
+   ```bash
+   DATABASE_URL="<your-vercel-postgres-url>" npm run db:seed
+   ```
+
+   Or skip the seed and just create your first report through the UI.
+
+### Vercel-specific notes
+
+- The Prisma generator already declares `binaryTargets = ["native", "rhel-openssl-3.0.x", "debian-openssl-3.0.x"]` so the client binary matches Vercel's Node 20 runtime.
+- `vercel.json` allocates 1024 MB / 30s to the PDF route — `@react-pdf/renderer` needs Node runtime and a bit of headroom for large reports.
+- `next.config.mjs` already lists `@react-pdf/renderer` under `serverComponentsExternalPackages` so it bundles correctly.
+- For high traffic, switch `DATABASE_URL` to a **pooled** connection or use **Prisma Accelerate** to avoid serverless connection exhaustion.
+
 ## Production notes
 
 - For prod, swap `SEED_ADMIN_PASSWORD` for a real password and rotate `NEXTAUTH_SECRET`.
