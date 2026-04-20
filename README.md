@@ -4,6 +4,8 @@ An internal Next.js 14 web portal for QA teams to capture daily test data and in
 
 The seed dataset emulates **Adobe Creative Cloud Desktop build 28.9.8** across **Mac Intel / Mac ARM / Windows** so the dashboard, charts, and preview look meaningful out of the box.
 
+> Auth is intentionally **disabled** in this build — opening the URL drops you straight into the dashboard. Run it on an internal network or behind your own access layer (Vercel password protection, IP allowlist, etc.).
+
 ---
 
 ## Run locally — 3 commands, zero external services
@@ -16,18 +18,11 @@ npm run setup      # creates the SQLite DB and seeds 15 days of demo data
 npm run dev        # http://localhost:3000
 ```
 
-Login (seeded):
-
-| Email | Password |
-| --- | --- |
-| `admin@qa-portal.local` | `admin123` |
-| `priya@qa-portal.local` | `priya123` |
-
 > The first run writes `prisma/dev.db` (gitignored). Re-seed any time with `npm run db:reset`.
 
 ---
 
-## Deploy to Vercel — 3 steps
+## Deploy to Vercel — 2 steps
 
 Serverless functions can't write SQLite files, so for production we recommend Vercel/Neon Postgres. **You don't need to edit the schema** — the `scripts/prebuild.mjs` step automatically switches the Prisma provider to `postgresql` whenever `DATABASE_URL` looks like a Postgres URL.
 
@@ -41,31 +36,18 @@ In the Vercel dashboard: **Add New… → Project → Import this GitHub repo**,
 
 ### Step 2 — Add a Postgres database
 
-In your Vercel project: **Storage → Create Database → Neon (Postgres)** (free tier, one click). Vercel automatically injects `DATABASE_URL` into all environments.
+In your Vercel project: **Storage → Create Database → Neon (Postgres)** (free tier, one click). Vercel automatically injects `DATABASE_URL` into all environments. Trigger a redeploy and the prebuild step will:
 
-### Step 3 — Add NextAuth env vars + redeploy
-
-In your Vercel project **Settings → Environment Variables**:
-
-| Name | Value |
-| --- | --- |
-| `NEXTAUTH_SECRET` | run `openssl rand -base64 32` |
-| `NEXTAUTH_URL` | your prod URL, e.g. `https://your-app.vercel.app` |
-
-Then **Deployments → Redeploy** (or just push a new commit). On this build the prebuild step:
-
-1. Detects the Postgres `DATABASE_URL` and flips the schema provider to `postgresql`.
-2. Runs `prisma generate`.
-3. Runs `prisma db push` to create all tables.
-4. Builds Next.js.
-
-After it deploys, log in with `admin@qa-portal.local` / `admin123` (you can also seed demo data by temporarily running `npm run db:seed` locally with the prod `DATABASE_URL` exported, or by registering new users — the app starts empty otherwise).
+1. Detect the Postgres `DATABASE_URL` and flip the schema provider to `postgresql`.
+2. Run `prisma generate`.
+3. Run `prisma db push` to create all tables.
+4. Auto-seed 15 days of demo data (only on the first deploy, when the DB is empty).
+5. Build Next.js.
 
 ---
 
 ## What you get
 
-- **Login** — credentials auth via NextAuth, JWT sessions, bcrypt hashes.
 - **Dashboard** — KPIs for the latest report, 7d/15d pass-fail trend, bug trend, platform breakdown, recent reports.
 - **Reports list** — every report with summary counts; preview, edit, duplicate, PDF export.
 - **Create / edit** — single rich form with sections for info, summary, new bugs, devices, detailed test results, and a live-updating platform summary.
@@ -76,21 +58,19 @@ After it deploys, log in with `admin@qa-portal.local` / `admin123` (you can also
 
 ```
 prisma/
-  schema.prisma           # SQLite by default; one-line switch to postgresql
+  schema.prisma           # SQLite by default; auto-switches to postgresql on Vercel
   seed.ts                 # 15 days of realistic CCD data
 src/
   app/
-    (app)/                # Authenticated layout
+    (app)/                # Main app layout
       dashboard/          # KPI dashboard
       reports/            # List, new, edit, preview
       settings/           # Lightweight admin overview
     api/
-      auth/[...nextauth]/ # NextAuth route
       reports/...         # CRUD + duplicate + PDF endpoints
-    login/                # Login screen
   components/             # UI primitives, charts, report views
   lib/
-    auth.ts               # NextAuth options + session helper
+    default-user.ts       # Lazy-creates a default user for FK requirements
     prisma.ts             # Singleton Prisma client
     types.ts              # String-literal unions (Platform, TestOutcome, ...)
     validators.ts         # Zod schemas for all inputs
@@ -108,6 +88,7 @@ src/
 | Change the PDF template | `src/lib/pdf-document.tsx` |
 | Add a new page | `src/app/(app)/your-page/page.tsx` |
 | Tweak business logic | `src/lib/report-helpers.ts` |
+| Re-add login | restore `next-auth`, recreate `src/lib/auth.ts`, wrap `src/app/(app)/layout.tsx` with a session guard |
 
 ## Available scripts
 
@@ -137,5 +118,5 @@ Bug `status` is a free-text field; `Closed`, `Resolved`, and `Done` are treated 
 ## Notes
 
 - SQLite is great for local + small teams; for multi-user prod, Postgres is the right call.
-- All routes under `/dashboard`, `/reports`, `/settings` require an authenticated session; the API routes also enforce auth.
+- The app has **no authentication**. Anyone with the URL can read and edit reports — host accordingly.
 - The seed wipes existing data before inserting. Don't run it against a production DB.

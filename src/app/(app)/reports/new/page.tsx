@@ -2,12 +2,10 @@ import { prisma } from "@/lib/prisma";
 import { buildDailyTrend } from "@/lib/report-helpers";
 import { ReportForm } from "@/components/report/report-form";
 import { PageHeader } from "@/components/page-header";
-import { getSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewReportPage() {
-  const session = await getSession();
   const reports = await prisma.report.findMany({
     orderBy: { reportDate: "asc" },
     include: { bugs: true, devices: true, testResults: true },
@@ -23,7 +21,7 @@ export default async function NewReportPage() {
       <ReportForm
         trend={trend}
         initial={{
-          preparedBy: session?.user?.name ?? "",
+          preparedBy: "",
           title: `Daily QA Report - ${new Date().toISOString().slice(0, 10)}`,
         }}
       />

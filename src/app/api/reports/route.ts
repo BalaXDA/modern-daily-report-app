@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { reportSchema } from "@/lib/validators";
-import { getSession } from "@/lib/auth";
+import { getDefaultUser } from "@/lib/default-user";
 
 export async function GET() {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const reports = await prisma.report.findMany({
     orderBy: { reportDate: "desc" },
     include: { _count: { select: { bugs: true, testResults: true } } },
@@ -14,9 +12,6 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
   const body = await req.json();
   const parsed = reportSchema.safeParse(body);
   if (!parsed.success) {
@@ -26,6 +21,7 @@ export async function POST(req: Request) {
     );
   }
   const data = parsed.data;
+  const user = await getDefaultUser();
 
   const report = await prisma.report.create({
     data: {
@@ -36,7 +32,7 @@ export async function POST(req: Request) {
       preparedBy: data.preparedBy,
       summary: data.summary,
       status: data.status,
-      createdById: session.user.id,
+      createdById: user.id,
       bugs: {
         create: data.bugs.map((b) => ({
           jiraId: b.jiraId,

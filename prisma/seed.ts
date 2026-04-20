@@ -1,5 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
 
 type Platform = "MAC_INTEL" | "MAC_ARM" | "WINDOWS";
 type TestOutcome = "PASS" | "FAIL" | "NA" | "UNTESTED";
@@ -133,31 +132,19 @@ async function main() {
     await prisma.user.deleteMany();
   }
 
-  const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? "admin@qa-portal.local").toLowerCase();
-  const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "admin123";
+  // Auth was removed; we keep one default user record because Report.createdById
+  // is still a required FK in the schema.
   const adminName = process.env.SEED_ADMIN_NAME ?? "QA Admin";
-  const passwordHash = await bcrypt.hash(adminPassword, 10);
-
   const admin = await prisma.user.create({
     data: {
       name: adminName,
-      email: adminEmail,
-      passwordHash,
+      email: "admin@qa-portal.local",
+      passwordHash: "",
       role: "ADMIN",
     },
   });
 
-  const qaUser = await prisma.user.create({
-    data: {
-      name: "Priya QA",
-      email: "priya@qa-portal.local",
-      passwordHash: await bcrypt.hash("priya123", 10),
-      role: "QA",
-    },
-  });
-
-  console.log(`Created admin: ${admin.email} / ${adminPassword}`);
-  console.log(`Created QA user: ${qaUser.email} / priya123`);
+  console.log(`Created default user: ${admin.email}`);
 
   const product = "Adobe Creative Cloud Desktop";
   const buildVersion = "28.9.8";
@@ -287,7 +274,6 @@ async function main() {
   }
 
   console.log("\nSeed complete.");
-  console.log(`Login at /login with: ${adminEmail} / ${adminPassword}`);
 }
 
 main()

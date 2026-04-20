@@ -1,17 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
+import { getDefaultUser } from "@/lib/default-user";
 
 export async function POST(_req: Request, { params }: { params: { id: string } }) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
   const original = await prisma.report.findUnique({
     where: { id: params.id },
     include: { bugs: true, devices: true, testResults: true },
   });
   if (!original) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  const user = await getDefaultUser();
   const today = new Date();
   today.setHours(9, 30, 0, 0);
 
@@ -21,10 +19,10 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
       productName: original.productName,
       buildVersion: original.buildVersion,
       reportDate: today,
-      preparedBy: session.user.name ?? original.preparedBy,
+      preparedBy: original.preparedBy,
       summary: original.summary,
       status: "DRAFT",
-      createdById: session.user.id,
+      createdById: user.id,
       devices: {
         create: original.devices.map((d) => ({
           platform: d.platform,

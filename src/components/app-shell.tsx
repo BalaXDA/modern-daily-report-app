@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
-import { ClipboardCheck, LayoutDashboard, FileText, Plus, Settings, LogOut } from "lucide-react";
+import { ClipboardCheck, LayoutDashboard, FileText, Plus, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -14,13 +12,7 @@ const NAV = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-export function AppShell({
-  children,
-  user,
-}: {
-  children: React.ReactNode;
-  user: { name?: string | null; email?: string | null; role?: string };
-}) {
+export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -55,25 +47,8 @@ export function AppShell({
             );
           })}
         </nav>
-        <div className="border-t p-3">
-          <div className="mb-3 rounded-lg bg-slate-50 p-3">
-            <div className="truncate text-sm font-medium">{user.name ?? user.email}</div>
-            <div className="truncate text-[11px] text-muted-foreground">{user.email}</div>
-            {user.role && (
-              <div className="mt-1 inline-block rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-700">
-                {user.role}
-              </div>
-            )}
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full justify-start"
-            onClick={() => signOut({ callbackUrl: "/login" })}
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Sign out
-          </Button>
+        <div className="border-t p-4 text-[11px] text-muted-foreground">
+          Internal QA tool &middot; v1.0
         </div>
       </aside>
       <main className="min-w-0 flex-1">{children}</main>
