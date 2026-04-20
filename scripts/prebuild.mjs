@@ -76,4 +76,14 @@ if (!isPostgres && !isSqliteFile) {
 
 console.log("[prebuild] Running prisma db push...");
 execSync("npx prisma db push --skip-generate --accept-data-loss", { stdio: "inherit" });
+
+// Auto-seed if the DB is empty. SEED_AUTO=true makes prisma/seed.ts
+// skip cleanly when users already exist, so this is safe to run on
+// every deploy.
+console.log("[prebuild] Running auto-seed (idempotent - only runs if DB is empty)...");
+execSync("npx tsx prisma/seed.ts", {
+  stdio: "inherit",
+  env: { ...process.env, SEED_AUTO: "true" },
+});
+
 console.log("[prebuild] Done.");

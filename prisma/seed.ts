@@ -113,12 +113,25 @@ function dateNDaysAgo(days: number): Date {
 }
 
 async function main() {
-  console.log("Resetting existing data...");
-  await prisma.testResult.deleteMany();
-  await prisma.bug.deleteMany();
-  await prisma.deviceConfiguration.deleteMany();
-  await prisma.report.deleteMany();
-  await prisma.user.deleteMany();
+  // SEED_AUTO=true means "only seed if empty, never wipe data".
+  // Used by the Vercel prebuild step on first deploy.
+  const autoMode = process.env.SEED_AUTO === "true";
+
+  if (autoMode) {
+    const existing = await prisma.user.count();
+    if (existing > 0) {
+      console.log(`SEED_AUTO=true and ${existing} users already exist - skipping.`);
+      return;
+    }
+    console.log("SEED_AUTO=true and database is empty - seeding...");
+  } else {
+    console.log("Resetting existing data...");
+    await prisma.testResult.deleteMany();
+    await prisma.bug.deleteMany();
+    await prisma.deviceConfiguration.deleteMany();
+    await prisma.report.deleteMany();
+    await prisma.user.deleteMany();
+  }
 
   const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? "admin@qa-portal.local").toLowerCase();
   const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "admin123";
