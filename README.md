@@ -29,38 +29,37 @@ Login (seeded):
 
 ## Deploy to Vercel — 3 steps
 
-Serverless functions can't write SQLite files, so for production we recommend Vercel/Neon Postgres. The schema is intentionally portable — it uses no SQLite-only or Postgres-only features, and **no application code changes are required**.
+Serverless functions can't write SQLite files, so for production we recommend Vercel/Neon Postgres. **You don't need to edit the schema** — the `scripts/prebuild.mjs` step automatically switches the Prisma provider to `postgresql` whenever `DATABASE_URL` looks like a Postgres URL.
 
-### Step 1 — Switch the Prisma provider
-
-Open `prisma/schema.prisma` and change one line:
-
-```prisma
-datasource db {
-  provider = "postgresql"   // was: "sqlite"
-  url      = env("DATABASE_URL")
-}
-```
-
-### Step 2 — Push to GitHub and import in Vercel
+### Step 1 — Push to GitHub and import in Vercel
 
 ```bash
-git add . && git commit -m "Configure for Vercel deploy" && git push
+git push
 ```
 
-In the Vercel dashboard: **New Project → Import this GitHub repo**. Don't deploy yet — first add the env vars.
+In the Vercel dashboard: **Add New… → Project → Import this GitHub repo**, then click **Deploy** (a first deploy without a database will still succeed; the app will just 500 on data routes until you add the DB).
 
-### Step 3 — Add a Postgres database + env vars
+### Step 2 — Add a Postgres database
 
-In your Vercel project:
+In your Vercel project: **Storage → Create Database → Neon (Postgres)** (free tier, one click). Vercel automatically injects `DATABASE_URL` into all environments.
 
-1. **Storage tab → Create Database → Neon Postgres** (one click, free tier). Vercel will inject `DATABASE_URL` automatically.
-2. **Settings → Environment Variables** — add:
-   - `NEXTAUTH_SECRET` → run `openssl rand -base64 32` to generate one
-   - `NEXTAUTH_URL` → your production URL, e.g. `https://your-app.vercel.app`
-3. **Deployments → Redeploy** (or push a new commit).
+### Step 3 — Add NextAuth env vars + redeploy
 
-The `build` script runs `prisma db push` against the new database on first deploy, creating all tables. Then visit `/api/seed` (or run `npm run db:seed` against the prod URL once) to populate demo data — or just start using it.
+In your Vercel project **Settings → Environment Variables**:
+
+| Name | Value |
+| --- | --- |
+| `NEXTAUTH_SECRET` | run `openssl rand -base64 32` |
+| `NEXTAUTH_URL` | your prod URL, e.g. `https://your-app.vercel.app` |
+
+Then **Deployments → Redeploy** (or just push a new commit). On this build the prebuild step:
+
+1. Detects the Postgres `DATABASE_URL` and flips the schema provider to `postgresql`.
+2. Runs `prisma generate`.
+3. Runs `prisma db push` to create all tables.
+4. Builds Next.js.
+
+After it deploys, log in with `admin@qa-portal.local` / `admin123` (you can also seed demo data by temporarily running `npm run db:seed` locally with the prod `DATABASE_URL` exported, or by registering new users — the app starts empty otherwise).
 
 ---
 
