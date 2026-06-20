@@ -18,6 +18,7 @@ npm-debug.log*
 .DS_Store
 .vscode
 .idea
+.cursor
 
 prisma/*.db
 prisma/*.db-journal
